@@ -26,6 +26,9 @@ $(BUILD)/test_main_san: $(TESTS)/test_main.cpp | $(BUILD)
 $(BUILD)/basic_usage: $(EXAMPLES)/basic_usage.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
+$(BUILD)/test_prf: $(TESTS)/test_prf.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
 debug: $(BUILD)/test_main_debug
 sanitize: $(BUILD)/test_main_san
 examples: $(BUILD)/basic_usage
@@ -41,6 +44,10 @@ test-q: $(BUILD)/test_main
 
 test-hg: $(BUILD)/test_hg
 	@./$(BUILD)/test_hg
+
+
+test-prf: $(BUILD)/test_prf
+	@./$(BUILD)/test_prf
 
 clean:
 	rm -rf $(BUILD) pvac_metrics.csv

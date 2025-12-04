@@ -36,9 +36,13 @@ struct BitVec {
         return s;
     }
 };
-
-inline int parity64(uint64_t x) {
-    return (__builtin_popcountll(x) & 1);
-}
-
+    // pure xor shift + the same time for any x
+    inline int parity64(uint64_t x) {
+        x ^= x >> 32;
+        x ^= x >> 16;
+        x ^= x >> 8;
+        x ^= x >> 4;
+        x &= 0xF;
+        return (0x6996 >> x) & 1;
+    }
 }

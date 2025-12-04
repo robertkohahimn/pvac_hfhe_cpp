@@ -13,11 +13,18 @@ namespace pvac {
 // 128 bit
 inline Fp hash_to_fp_nonzero(uint64_t lo, uint64_t hi) {
     Fp r = fp_from_words(lo, hi & MASK63);
-    if (r.lo == 0 && r.hi == 0) {
-        r = fp_from_u64(1);
-    }
-    return r;
+    uint64_t orv = r.lo | r.hi;
+    uint64_t mask_zero = ((orv | -orv) >> 63) ^ 1;
+    mask_zero = 0u - mask_zero;
+
+    Fp one = fp_from_u64(1);
+
+    Fp out;
+    out.lo = (r.lo & ~mask_zero) | (one.lo & mask_zero);
+    out.hi = (r.hi & ~mask_zero) | (one.hi & mask_zero);
+    return out;
 }
+
 
 // prf_k + canon_tag + H_digest + seed
 inline std::vector<uint64_t> build_prf_key(
@@ -85,36 +92,46 @@ inline void lpn_make_ybits(
 
 // toeplitz comp
 inline Fp prf_R_core(
-    const PubKey& pk,
-    const SecKey& sk,
-    const RSeed& seed,
-    const char* dom
+    const PubKey & pk,
+    const SecKey & sk,
+    const RSeed & seed,
+    const char * dom
 ) {
     std::vector<uint64_t> ybits;
     lpn_make_ybits(pk, sk, seed, dom, ybits);
 
-    auto seed_words = build_prf_key(pk, sk, seed);
+    std::vector<uint64_t> seed_words;
+    seed_words.reserve(sk.prf_k.size() + 4);
+
+    for (auto x : sk.prf_k) {
+        seed_words.push_back(x);
+    }
+
+    // +
+    seed_words.push_back(pk.canon_tag);
+    seed_words.push_back(seed.ztag);
+    seed_words.push_back(seed.nonce.lo);
+    seed_words.push_back(seed.nonce.hi);
+    //
 
     XofShake xof;
     xof.init(std::string(Dom::TOEP), seed_words);
 
-    size_t top_words = ((size_t)pk.prm.lpn_t + 127 + 63) / 64;
+    size_t top_words = ((size_t)pk.prm.lpn_t + 127u + 63u) / 64u;
+    std::vector<uint64_t> top(top_words);
 
-    for (;;) {
-        std::vector<uint64_t> top(top_words);
-        for (size_t i = 0; i < top_words; i++) {
-            top[i] = xof.take_u64();
-        }
-
-        uint64_t lo = 0, hi = 0;
-        toep_127(top, ybits, lo, hi);
-
-        Fp r = hash_to_fp_nonzero(lo, hi);
-        if (!(r.lo == 0 && r.hi == 0)) {
-            return r;
-        }
+    for (size_t i = 0; i < top_words; i++) {
+        top[i] = xof.take_u64();
     }
+
+    uint64_t lo = 0;
+    uint64_t hi = 0;
+
+    toep_127(top, ybits, lo, hi);
+
+    return hash_to_fp_nonzero(lo, hi);
 }
+
 
 // r1 * r2 * r3 
 inline Fp prf_R(const PubKey& pk, const SecKey& sk, const RSeed& seed) {

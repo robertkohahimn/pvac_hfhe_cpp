@@ -11,7 +11,7 @@ namespace pvac {
 
 inline std::vector<int> factor_small(int n) {
     std::vector<int> p;
-    int              x = n;
+    int x = n;
 
     for (int d = 2; d * (long long)d <= x; ++d) {
         if (x % d == 0) {
