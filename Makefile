@@ -41,11 +41,15 @@ $(BUILD)/test_sigma: $(TESTS)/test_sigma.cpp | $(BUILD)
 $(BUILD)/test_zero: $(TESTS)/test_zero.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
+$(BUILD)/test_lpn: $(TESTS)/test_lpn.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
 
 debug: $(BUILD)/test_main_debug
 sanitize: $(BUILD)/test_main_san
 examples: $(BUILD)/basic_usage
 test_zero: $(BUILD)/test_zero
+test_lpn: $(BUILD)/test_lpn
 
 
 test: $(BUILD)/test_main
@@ -74,6 +78,9 @@ test-sigma: $(BUILD)/test_sigma
 
 test-zero: $(BUILD)/test_zero
 	@./$(BUILD)/test_zero
+
+test-lpn: $(BUILD)/test_lpn
+	@./$(BUILD)/test_lpn
 
 clean:
 	rm -rf $(BUILD) pvac_metrics.csv
